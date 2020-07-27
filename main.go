@@ -2,14 +2,15 @@ package main
 
 import (
 	"blog_service/internal/model"
+	"blog_service/pkg/logger"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-
-	klogv2 "k8s.io/klog/v2"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"blog_service/global"
 	"blog_service/internal/routers"
@@ -18,8 +19,25 @@ import (
 
 func init() {
 	if err := setupSetting(); err != nil {
-		klogv2.Fatalf("init setup setting error: %v", err)
+		log.Fatalf("init setup setting error: %v", err)
 	}
+	if err := setupLogger(); err != nil {
+		log.Fatalf("init setup logger error: %v", err)
+	}
+	if err := setupDBEngine(); err != nil {
+		log.Fatalf("init setup db engine error: %v", err)
+	}
+}
+
+func setupLogger() error {
+	global.Logger = logger.NewLogger(&lumberjack.Logger{
+		Filename:  global.AppSetting.LogSavePath + "/" + global.AppSetting.LogFileName + "/" + global.AppSetting.LogFileExt,
+		MaxSize:   600,
+		MaxAge:    10,
+		LocalTime: true,
+	}, "", log.LstdFlags).WithCaller(2)
+
+	return nil
 }
 
 func setupDBEngine() error {
@@ -75,7 +93,7 @@ func main() {
 	}
 
 	if err := s.ListenAndServe(); err != nil {
-		klogv2.Infof("start http server error: %v", err)
+		log.Fatalf("start http server error: %v", err)
 		os.Exit(1)
 	}
 }
