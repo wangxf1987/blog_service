@@ -1,0 +1,23 @@
+Server:
+  RunMode: debug # set it to 'release' in the PRD.
+  HttpPort: 8080
+  ReadTimeout: 60 # second
+  WriteTimeout: 60 # second
+APP:
+  DefaultPageSize: 10
+  MaxPageSize: 100
+  LogSavePath: storage/logs
+  LogFileName: app
+  LogFileExt: .log
+Database:
+  DBType: mysql
+  DBUsename: xxxx
+  DBPassword: xxxx
+  DBHost: 120.0.0.1
+  DBPort: 3306
+  DBName: blog_service
+  TablePrefix: blog_
+  Charset: utf8
+  ParseTime: True
+  MaxIdleConns: 60
+  MaxOpenConns: 20
