@@ -9,6 +9,7 @@ APP:
   LogSavePath: storage/logs
   LogFileName: app
   LogFileExt: .log
+  SwaggerURL: /sw
 Database:
   DBType: mysql
   DBUsename: xxxx

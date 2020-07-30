@@ -11,7 +11,7 @@ type ServerSettings struct {
 
 type AppSettings struct {
 	DefaultPageSize int
-	MaxPageSiz      int
+	MaxPageSize     int
 	LogSavePath     string
 	LogFileName     string
 	LogFileExt      string

@@ -24,9 +24,9 @@ func init() {
 	if err := setupLogger(); err != nil {
 		log.Fatalf("init setup logger error: %v", err)
 	}
-	if err := setupDBEngine(); err != nil {
+	/*	if err := setupDBEngine(); err != nil {
 		log.Fatalf("init setup db engine error: %v", err)
-	}
+	}*/
 }
 
 func setupLogger() error {
@@ -72,6 +72,10 @@ func setupSetting() error {
 	return nil
 }
 
+// @title blog service demo
+// @version 1.0
+// @description blog service demo
+// @termOfService https://github.com/wangxf1987/blog_service
 func main() {
 	gin.SetMode(global.ServerSetting.RunMode)
 
