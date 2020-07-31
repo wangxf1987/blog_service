@@ -4,6 +4,7 @@ import (
 	"blog_service/global"
 	"blog_service/pkg/setting"
 	"fmt"
+	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -36,8 +37,74 @@ func NewDBEngine(databaseSetting *setting.DatabaseSettings) (*gorm.DB, error) {
 	}
 
 	db.SingularTable(true)
+	db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForCreateCallBack)
+	db.Callback().Update().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallBack)
+	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
 	db.DB().SetMaxIdleConns(databaseSetting.MaxIdleConns)
 	db.DB().SetMaxOpenConns(databaseSetting.MaxOpenConns)
 
 	return db, nil
+}
+
+func updateTimeStampForCreateCallBack(score *gorm.Scope) {
+	if !score.HasError() {
+		nowTime := time.Now().Unix()
+		if createTimeField, ok := score.FieldByName("CreatedOn"); ok {
+			if createTimeField.IsBlank {
+				_ = createTimeField.Set(nowTime)
+			}
+		}
+
+		if modifyTimeField, ok := score.FieldByName("ModifiedOn"); ok {
+			if modifyTimeField.IsBlank {
+				_ = modifyTimeField.Set(nowTime)
+			}
+		}
+	}
+}
+
+func updateTimeStampForUpdateCallBack(score *gorm.Scope) {
+	if _, ok := score.Get("gorm:update_column"); !ok {
+		_ = score.SetColumn("ModifiedOn", time.Now().Unix())
+	}
+}
+
+func deleteCallback(score *gorm.Scope) {
+	if !score.HasError() {
+		var extraOption string
+		if str, ok := score.Get("gorm:delete_option"); ok {
+			extraOption = fmt.Sprint(str)
+		}
+
+		deleteOnField, hasDeletedOnField := score.FieldByName("DeletedOn")
+		isDelField, hasIsDelField := score.FieldByName("IsDel")
+		if !score.Search.Unscoped && hasDeletedOnField && hasIsDelField {
+			now := time.Now().Unix()
+			score.Raw(fmt.Sprintf(
+				"UPDATE %v SET %v=%v, %v=%v%v%v",
+				score.QuotedTableName(),
+				score.Quote(deleteOnField.DBName),
+				score.AddToVars(now),
+				score.Quote(isDelField.DBName),
+				score.AddToVars(1),
+				addExtraSpaceIfExist(score.CombinedConditionSql()),
+				addExtraSpaceIfExist(extraOption),
+			)).Exec()
+		} else {
+			score.Raw(fmt.Sprintf(
+				"DELETE FROM %v%v%v",
+				score.QuotedTableName(),
+				addExtraSpaceIfExist(score.CombinedConditionSql()),
+				addExtraSpaceIfExist(extraOption),
+			))
+		}
+	}
+}
+
+func addExtraSpaceIfExist(str string) string {
+	if str != "" {
+		return " " + str
+	}
+
+	return ""
 }
